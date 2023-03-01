@@ -131,9 +131,13 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val args = call.arguments as Map<*, *>
 
                 val profileInfo = Bundle()
-                profileInfo.putString("Proxy", args["Proxy"] as String)
-                if (args.containsKey("mtu")) profileInfo.putInt("MTU", args["mtu"] as Int)
-                if (args.containsKey("mark")) profileInfo.putInt("MARK", args["mark"] as Int)
+                profileInfo.putString("PROXY", args["proxy"] as String)
+                if (args.containsKey("mtu")) {
+                    profileInfo.putInt("MTU", args["mtu"] as Int)
+                }
+                if (args.containsKey("mark")) {
+                    profileInfo.putInt("MARK", args["mark"] as Int)
+                }
 
                 vpnStateService?.connect(profileInfo, true)
                 result.success(true)

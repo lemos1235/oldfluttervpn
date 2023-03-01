@@ -6,11 +6,14 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 public class VpnStateService extends Service {
+
+    private static final String TAG = VpnStateService.class.getSimpleName();
 
     private final IBinder mBinder = new LocalBinder();
 
@@ -24,7 +27,7 @@ public class VpnStateService extends Service {
 
     @Override
     public void onCreate() {
-        System.out.println("onCreate");
+        Log.i(TAG, "onCreate");
     }
 
     @Nullable
@@ -35,7 +38,7 @@ public class VpnStateService extends Service {
 
     @Override
     public void onDestroy() {
-        System.out.println("onDestroy");
+        Log.i(TAG, "onDestroy");
     }
 
     public void connect(Bundle profileInfo, boolean fromScratch) {

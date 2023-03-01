@@ -12,6 +12,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
@@ -31,27 +32,22 @@ public class CharonVpnService extends VpnService {
     private static final String ROUTE = "0.0.0.0";
     private static final String DNS = "1.1.1.1";
 
-    // You could spin up a local SOCK5 server on your workstation with:
-    // ssh -ND "*:8080" -q -C -N <username>@<remote-host>
-
     private ParcelFileDescriptor tun;
 
     private VpnProfile mProfile;
 
-    private final ExecutorService executors = Executors.newFixedThreadPool(1);
+    private Thread mConnectionHandler;
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {    /* since the service is local this is theoretically only called when the process is terminated */
             Log.i(TAG, "onServiceDisconnected");
-            executors.shutdown();
         }
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.i(TAG, "onServiceConnected");
-            startVpn();
         }
     };
 
@@ -59,20 +55,19 @@ public class CharonVpnService extends VpnService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand");
         if (intent != null) {
-            VpnProfile profile = null;
-            if (!DISCONNECT_ACTION.equals(intent.getAction())) {
-                Bundle bundle = intent.getExtras();
-                if (bundle != null) {
-                    profile = new VpnProfile();
-                    profile.setUUID(UUID.randomUUID());
-                    profile.setProxy(bundle.getString("Proxy"));
-                    profile.setMTU(bundle.getInt("MTU", 0));
-                    profile.setMark(bundle.getInt("MARK", 0));
-                }
+            if (DISCONNECT_ACTION.equals(intent.getAction())) {
+                mProfile = null;
+                stopVpn();
             } else {
-                executors.shutdownNow();
+                Bundle bundle = intent.getExtras();
+                VpnProfile profile = new VpnProfile();
+                profile.setUUID(UUID.randomUUID());
+                profile.setProxy(bundle.getString("PROXY"));
+                profile.setMTU(bundle.getInt("MTU", 0));
+                profile.setMark(bundle.getInt("MARK", 0));
+                mProfile = profile;
+                startVpn();
             }
-            mProfile = profile;
         }
         return START_NOT_STICKY;
     }
@@ -86,6 +81,11 @@ public class CharonVpnService extends VpnService {
     }
 
     @Override
+    public void onRevoke() {
+        stopVpn();
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         unbindService(mServiceConnection);
@@ -93,6 +93,11 @@ public class CharonVpnService extends VpnService {
 
     public void startVpn() {
         Log.i(TAG, "startVpn");
+        mConnectionHandler = new Thread(this::setupVpn);
+        mConnectionHandler.start();
+    }
+
+    private void setupVpn() {
         if (tun == null) {
             try {
                 Builder builder = new Builder()
@@ -121,10 +126,27 @@ public class CharonVpnService extends VpnService {
             key.setTCPSendBufferSize("");
             key.setTCPReceiveBufferSize("");
             key.setTCPModerateReceiveBuffer(false);
-
             engine.Engine.insert(key);
-            executors.submit(engine.Engine::start);
+            engine.Engine.start();
+            Log.i(TAG, "VPN is started");
         }
+    }
+
+    public void stopVpn() {
+        try {
+            if (tun != null) {
+                tun.close();
+                tun = null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            mConnectionHandler.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Log.i(TAG, "VPN is stopped");
     }
 
     /**
