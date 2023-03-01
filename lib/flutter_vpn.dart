@@ -40,47 +40,19 @@ class FlutterVpn {
   /// Disconnect and stop VPN service.
   static Future<void> disconnect() => FlutterVpnPlatform.instance.disconnect();
 
-  /// Connect to VPN. (IKEv2-EAP)
+  /// Connect to VPN.
   ///
   /// This will create a background VPN service.
   /// MTU is only available on android.
-  static Future<void> connectIkev2EAP({
-    required String server,
-    required String username,
-    required String password,
-    String? name,
+  static Future<void> connect({
+    required String proxy,
     int? mtu,
-    int? port,
+    int? mark,
   }) =>
-      FlutterVpnPlatform.instance.connectIkev2EAP(
-        server: server,
-        username: username,
-        password: password,
-        name: name,
+      FlutterVpnPlatform.instance.connect(
+        proxy: proxy,
         mtu: mtu,
-        port: port,
+        mark: mark,
       );
 
-  /// Connect to VPN. (IPSec)
-  ///
-  /// This will create a background VPN service.
-  /// Android implementation is not available.
-  static Future<void> connectIPSec({
-    required String server,
-    required String username,
-    required String password,
-    required String secret,
-    String? name,
-    int? mtu,
-    int? port,
-  }) async =>
-      FlutterVpnPlatform.instance.connectIPSec(
-        server: server,
-        username: username,
-        password: password,
-        secret: secret,
-        name: name,
-        mtu: mtu,
-        port: port,
-      );
 }

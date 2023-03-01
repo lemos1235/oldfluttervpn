@@ -62,32 +62,14 @@ abstract class FlutterVpnPlatform extends PlatformInterface {
   /// Disconnect and stop VPN service.
   Future<void> disconnect() async => throw UnimplementedError();
 
-  /// Connect to VPN. (IKEv2-EAP)
+  /// Connect to VPN.
   ///
   /// This will create a background VPN service.
   /// MTU is only available on android.
-  Future<void> connectIkev2EAP({
-    required String server,
-    required String username,
-    required String password,
-    String? name,
+  Future<void> connect({
+    required String proxy,
     int? mtu,
-    int? port,
-  }) async =>
-      throw UnimplementedError();
-
-  /// Connect to VPN. (IPSec)
-  ///
-  /// This will create a background VPN service.
-  /// Android implementation is not available.
-  Future<void> connectIPSec({
-    required String server,
-    required String username,
-    required String password,
-    required String secret,
-    String? name,
-    int? mtu,
-    int? port,
+    int? mark,
   }) async =>
       throw UnimplementedError();
 }

@@ -33,7 +33,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
-import org.strongswan.android.logic.VpnStateService
+import club.lemos.android.logic.VpnStateService
 
 class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var activityBinding: ActivityPluginBinding
@@ -48,9 +48,10 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var vpnStateService: VpnStateService? = null
     private val vpnStateServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            println("onServiceConnected")
             vpnStateService = (service as VpnStateService.LocalBinder).service
-            VpnStateHandler.vpnStateService = vpnStateService
-            vpnStateService?.registerListener(VpnStateHandler)
+//            VpnStateHandler.vpnStateService = vpnStateService
+//            vpnStateService?.registerListener(VpnStateHandler)
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -61,7 +62,7 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         // Load charon bridge
-        System.loadLibrary("androidbridge")
+//        System.loadLibrary("androidbridge")
 
         // Register method channel.
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_vpn")
@@ -130,24 +131,20 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val args = call.arguments as Map<*, *>
 
                 val profileInfo = Bundle()
-                profileInfo.putString("VpnType", "ikev2-eap")
-                profileInfo.putString("Name", args["Name"] as String)
-                profileInfo.putString("Server", args["Server"] as String)
-                profileInfo.putString("Username", args["Username"] as String)
-                profileInfo.putString("Password", args["Password"] as String)
-                if (args.containsKey("MTU"))  profileInfo.putInt("MTU", args["MTU"] as Int)
-                if (args.containsKey("port")) profileInfo.putInt("Port", args["Port"] as Int)
+                profileInfo.putString("Proxy", args["Proxy"] as String)
+                if (args.containsKey("mtu")) profileInfo.putInt("MTU", args["mtu"] as Int)
+                if (args.containsKey("mark")) profileInfo.putInt("MARK", args["mark"] as Int)
 
                 vpnStateService?.connect(profileInfo, true)
                 result.success(true)
             }
             "getCurrentState" -> {
-                if (vpnStateService?.errorState != VpnStateService.ErrorState.NO_ERROR)
-                    result.success(4)
-                else
-                    result.success(vpnStateService?.state?.ordinal)
+//                if (vpnStateService?.errorState != VpnStateService.ErrorState.NO_ERROR)
+//                    result.success(4)
+//                else
+//                    result.success(vpnStateService?.state?.ordinal)
             }
-            "getCharonErrorState" -> result.success(vpnStateService?.errorState?.ordinal)
+//            "getCharonErrorState" -> result.success(vpnStateService?.errorState?.ordinal)
             "disconnect" -> vpnStateService?.disconnect()
             else -> result.notImplemented()
         }
