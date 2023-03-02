@@ -20,16 +20,3 @@ enum FlutterVpnState {
   disconnecting,
   error,
 }
-
-/// The error state from `VpnStateService`.
-/// Only available for Android.
-enum CharonErrorState {
-  NO_ERROR,
-  AUTH_FAILED,
-  PEER_AUTH_FAILED,
-  LOOKUP_FAILED,
-  UNREACHABLE,
-  GENERIC_ERROR,
-  PASSWORD_MISSING,
-  CERTIFICATE_UNAVAILABLE,
-}

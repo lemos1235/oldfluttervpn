@@ -22,11 +22,6 @@ class FlutterVpn {
   /// Get current state.
   static Future<FlutterVpnState> get currentState => FlutterVpnPlatform.instance.currentState;
 
-  /// Get current error state from `VpnStateService`. (Android only)
-  /// When [FlutterVpnState.error] is received, details of error can be
-  /// inspected by [CharonErrorState]. Returns [null] on non-android platform.
-  static Future<CharonErrorState?> get charonErrorState => FlutterVpnPlatform.instance.charonErrorState;
-
   /// Prepare for vpn connection. (Android only)
   ///
   /// For first connection it will show a dialog to ask for permission.

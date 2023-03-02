@@ -43,20 +43,6 @@ class MethodChannelFlutterVpn extends FlutterVpnPlatform {
     return FlutterVpnState.values[state!];
   }
 
-  /// Get current error state from `VpnStateService`. (Android only)
-  /// When [FlutterVpnState.error] is received, details of error can be
-  /// inspected by [CharonErrorState]. Returns [null] on non-android platform.
-  @override
-  Future<CharonErrorState?> get charonErrorState async {
-    if (!Platform.isAndroid) return null;
-    var state = await methodChannel.invokeMethod<int>('getCharonErrorState');
-    assert(
-      state != null,
-      'Received a null state from `getCharonErrorState` call.',
-    );
-    return CharonErrorState.values[state!];
-  }
-
   /// Prepare for vpn connection. (Android only)
   ///
   /// For first connection it will show a dialog to ask for permission.

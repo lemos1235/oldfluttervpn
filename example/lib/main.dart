@@ -26,7 +26,6 @@ class _MyAppState extends State<MyApp> {
   final _proxyController = TextEditingController(text: "socks5://192.168.1.7:7890");
 
   var state = FlutterVpnState.disconnected;
-  CharonErrorState? charonState = CharonErrorState.NO_ERROR;
 
   @override
   void initState() {
@@ -46,7 +45,6 @@ class _MyAppState extends State<MyApp> {
           padding: const EdgeInsets.all(12),
           children: <Widget>[
             Text('Current State: $state'),
-            Text('Current Charon State: $charonState'),
             TextFormField(
               controller: _proxyController,
               decoration: const InputDecoration(icon: Icon(Icons.map_outlined)),
@@ -60,20 +58,6 @@ class _MyAppState extends State<MyApp> {
             ElevatedButton(
               child: const Text('Disconnect'),
               onPressed: () => FlutterVpn.disconnect(),
-            ),
-            ElevatedButton(
-              child: const Text('Update State'),
-              onPressed: () async {
-                var newState = await FlutterVpn.currentState;
-                setState(() => state = newState);
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Update Charon State'),
-              onPressed: () async {
-                var newState = await FlutterVpn.charonErrorState;
-                setState(() => charonState = newState);
-              },
             ),
           ],
         ),

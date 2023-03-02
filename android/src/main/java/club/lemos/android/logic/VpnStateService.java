@@ -6,10 +6,11 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+
+import club.lemos.flutter_vpn.StateListener;
 
 public class VpnStateService extends Service {
 
@@ -19,26 +20,23 @@ public class VpnStateService extends Service {
 
     private Bundle mProfileInfo;
 
+    public StateListener stateListener;
+
+    public void setStateListener(StateListener stateListener) {
+        this.stateListener = stateListener;
+    }
+
     public class LocalBinder extends Binder {
+        // vpnStateServiceConnection.onServiceConnected, get current service
         public VpnStateService getService() {
             return VpnStateService.this;
         }
-    }
-
-    @Override
-    public void onCreate() {
-        Log.i(TAG, "onCreate");
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.i(TAG, "onDestroy");
     }
 
     public void connect(Bundle profileInfo, boolean fromScratch) {

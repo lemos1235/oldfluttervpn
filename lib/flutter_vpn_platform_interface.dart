@@ -44,11 +44,6 @@ abstract class FlutterVpnPlatform extends PlatformInterface {
   /// Get current state.
   Future<FlutterVpnState> get currentState async => throw UnimplementedError();
 
-  /// Get current error state from `VpnStateService`. (Android only)
-  /// When [FlutterVpnState.error] is received, details of error can be
-  /// inspected by [CharonErrorState]. Returns [null] on non-android platform.
-  Future<CharonErrorState?> get charonErrorState async => throw UnimplementedError();
-
   /// Prepare for vpn connection. (Android only)
   ///
   /// For first connection it will show a dialog to ask for permission.

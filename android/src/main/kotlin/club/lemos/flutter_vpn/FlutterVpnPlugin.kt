@@ -1,18 +1,4 @@
-/**
- * Copyright (C) 2018-2022 Jason C.H
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- */
-
-package io.xdea.flutter_vpn
+package club.lemos.flutter_vpn
 
 import android.app.Activity.RESULT_OK
 import android.app.Service
@@ -22,7 +8,6 @@ import android.content.ServiceConnection
 import android.net.VpnService
 import android.os.Bundle
 import android.os.IBinder
-import androidx.annotation.NonNull
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -36,34 +21,28 @@ import io.flutter.plugin.common.PluginRegistry
 import club.lemos.android.logic.VpnStateService
 
 class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
+
     private lateinit var activityBinding: ActivityPluginBinding
 
-    /// The MethodChannel that will the communication between Flutter and native Android
-    ///
-    /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-    /// when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
+
     private lateinit var eventChannel: EventChannel
 
     private var vpnStateService: VpnStateService? = null
+
     private val vpnStateServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            println("onServiceConnected")
-            vpnStateService = (service as VpnStateService.LocalBinder).service
-//            VpnStateHandler.vpnStateService = vpnStateService
-//            vpnStateService?.registerListener(VpnStateHandler)
+            val vpnState = (service as VpnStateService.LocalBinder).service
+            vpnState.setStateListener(VpnStateHandler);
+            vpnStateService = vpnState
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
             vpnStateService = null
-            VpnStateHandler.vpnStateService = null
         }
     }
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        // Load charon bridge
-//        System.loadLibrary("androidbridge")
-
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         // Register method channel.
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_vpn")
         channel.setMethodCallHandler(this)
@@ -79,7 +58,7 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         )
     }
 
-    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
         eventChannel.setStreamHandler(null)
     }
@@ -98,11 +77,15 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         activityBinding = binding
     }
 
-    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+    override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "prepare" -> {
                 val intent = VpnService.prepare(activityBinding.activity.applicationContext)
-                if (intent != null) {
+                if (intent == null) {
+                    // vpn is permitted
+                    result.success(true)
+                } else {
+                    // grant permission
                     var listener: PluginRegistry.ActivityResultListener? = null
                     listener = PluginRegistry.ActivityResultListener { req, res, _ ->
                         result.success(req == 0 && res == RESULT_OK)
@@ -111,9 +94,6 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     }
                     activityBinding.addActivityResultListener(listener)
                     activityBinding.activity.startActivityForResult(intent, 0)
-                } else {
-                    // Already prepared if intent is null.
-                    result.success(true)
                 }
             }
             "prepared" -> {
@@ -143,12 +123,8 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 result.success(true)
             }
             "getCurrentState" -> {
-//                if (vpnStateService?.errorState != VpnStateService.ErrorState.NO_ERROR)
-//                    result.success(4)
-//                else
-//                    result.success(vpnStateService?.state?.ordinal)
+                result.success(VpnStateHandler.vpnState?.ordinal)
             }
-//            "getCharonErrorState" -> result.success(vpnStateService?.errorState?.ordinal)
             "disconnect" -> vpnStateService?.disconnect()
             else -> result.notImplemented()
         }

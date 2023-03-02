@@ -16,10 +16,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import club.lemos.android.data.VpnProfile;
+import club.lemos.flutter_vpn.VpnState;
 
 public class CharonVpnService extends VpnService {
 
@@ -38,16 +37,20 @@ public class CharonVpnService extends VpnService {
 
     private Thread mConnectionHandler;
 
+    private VpnStateService mService;
+
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {    /* since the service is local this is theoretically only called when the process is terminated */
             Log.i(TAG, "onServiceDisconnected");
+            mService = null;
         }
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.i(TAG, "onServiceConnected");
+            mService = ((VpnStateService.LocalBinder) service).getService();
         }
     };
 
@@ -98,6 +101,7 @@ public class CharonVpnService extends VpnService {
     }
 
     private void setupVpn() {
+        setState(VpnState.CONNECTING);
         if (tun == null) {
             try {
                 Builder builder = new Builder()
@@ -129,10 +133,12 @@ public class CharonVpnService extends VpnService {
             engine.Engine.insert(key);
             engine.Engine.start();
             Log.i(TAG, "VPN is started");
+            setState(VpnState.CONNECTED);
         }
     }
 
     public void stopVpn() {
+        setState(VpnState.DISCONNECTING);
         try {
             if (tun != null) {
                 tun.close();
@@ -147,6 +153,12 @@ public class CharonVpnService extends VpnService {
             e.printStackTrace();
         }
         Log.i(TAG, "VPN is stopped");
+    }
+
+    public void setState(VpnState state) {
+        if (mService != null) {
+            mService.stateListener.stateChanged(state);
+        }
     }
 
     /**
