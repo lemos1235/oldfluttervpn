@@ -67,4 +67,10 @@ abstract class FlutterVpnPlatform extends PlatformInterface {
     int? mark,
   }) async =>
       throw UnimplementedError();
+
+  /// Change VPN service's proxy.
+  Future<void> changeProxy({
+    required String proxy,
+  }) async =>
+      throw UnimplementedError();
 }

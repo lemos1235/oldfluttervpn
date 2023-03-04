@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import club.lemos.flutter_vpn.StateListener;
+import club.lemos.flutter_vpn.VpnState;
 
 public class VpnStateService extends Service {
 
@@ -21,6 +22,13 @@ public class VpnStateService extends Service {
     private Bundle mProfileInfo;
 
     public StateListener stateListener;
+
+    public VpnState vpnState;
+
+    public void changeVpnState(VpnState vpnState) {
+        this.vpnState = vpnState;
+        this.stateListener.stateChanged(vpnState);
+    }
 
     public void setStateListener(StateListener stateListener) {
         this.stateListener = stateListener;
@@ -39,24 +47,40 @@ public class VpnStateService extends Service {
         return mBinder;
     }
 
-    public void connect(Bundle profileInfo, boolean fromScratch) {
-        /* we assume we have the necessary permission */
-        Context context = getApplicationContext();
-        Intent intent = new Intent(context, CharonVpnService.class);
-        if (profileInfo == null) {
-            profileInfo = mProfileInfo;
-        } else {
-            mProfileInfo = profileInfo;
+    public void connect(Bundle profileInfo) {
+        if (!VpnState.CONNECTED.equals(vpnState)) {
+            Context context = getApplicationContext();
+            Intent intent = new Intent(context, CharonVpnService.class);
+            if (profileInfo == null) {
+                profileInfo = mProfileInfo;
+            } else {
+                mProfileInfo = profileInfo;
+            }
+            intent.putExtras(profileInfo);
+            ContextCompat.startForegroundService(context, intent);
         }
-        intent.putExtras(profileInfo);
-        ContextCompat.startForegroundService(context, intent);
     }
 
     public void disconnect() {
-        Context context = getApplicationContext();
-        Intent intent = new Intent(context, CharonVpnService.class);
-        intent.setAction(CharonVpnService.DISCONNECT_ACTION);
-        context.startService(intent);
+        if (VpnState.CONNECTED.equals(vpnState)) {
+            Context context = getApplicationContext();
+            Intent intent = new Intent(context, CharonVpnService.class);
+            intent.setAction(CharonVpnService.DISCONNECT_ACTION);
+            context.startService(intent);
+        }
+    }
+
+    public void changeProxy(String proxy) {
+        if (VpnState.CONNECTED.equals(vpnState)) {
+            Context context = getApplicationContext();
+            Intent intent = new Intent(context, CharonVpnService.class);
+            Bundle profileInfo = new Bundle(mProfileInfo);
+            profileInfo.putString("PROXY", proxy);
+            mProfileInfo = profileInfo;
+            intent.putExtras(mProfileInfo);
+            intent.setAction(CharonVpnService.CHG_PROXY_ACTION);
+            context.startService(intent);
+        }
     }
 
 }

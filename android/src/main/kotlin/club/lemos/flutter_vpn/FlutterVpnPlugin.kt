@@ -119,13 +119,18 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     profileInfo.putInt("MARK", args["mark"] as Int)
                 }
 
-                vpnStateService?.connect(profileInfo, true)
+                vpnStateService?.connect(profileInfo)
                 result.success(true)
             }
             "getCurrentState" -> {
                 result.success(VpnStateHandler.vpnState?.ordinal)
             }
             "disconnect" -> vpnStateService?.disconnect()
+            "changeProxy" -> {
+                val args = call.arguments as Map<*, *>
+                vpnStateService?.changeProxy( args["proxy"] as String)
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }
