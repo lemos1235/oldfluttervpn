@@ -5,7 +5,7 @@ import android.os.Looper
 import io.flutter.plugin.common.EventChannel
 
 enum class VpnState {
-    DISABLED,
+    DISCONNECTED,
     CONNECTING,
     CONNECTED,
     DISCONNECTING,

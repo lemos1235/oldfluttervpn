@@ -26,6 +26,8 @@ public class CharonVpnService extends VpnService {
 
     public static final String DISCONNECT_ACTION = "club.lemos.android.logic.CharonVpnService.DISCONNECT";
 
+    public static final String CHG_PROXY_ACTION = "club.lemos.android.logic.CharonVpnService.CHG_PROXY";
+
     private static final String ADDRESS = "10.0.0.2";
 
     private static final String ROUTE = "0.0.0.0";
@@ -61,6 +63,11 @@ public class CharonVpnService extends VpnService {
             if (DISCONNECT_ACTION.equals(intent.getAction())) {
                 mProfile = null;
                 stopVpn();
+            } else if (CHG_PROXY_ACTION.equals(intent.getAction())) {
+                Bundle bundle = intent.getExtras();
+                String proxy = bundle.getString("PROXY");
+                mProfile.setProxy(proxy);
+                changeProxy();
             } else {
                 Bundle bundle = intent.getExtras();
                 VpnProfile profile = new VpnProfile();
@@ -94,13 +101,14 @@ public class CharonVpnService extends VpnService {
         unbindService(mServiceConnection);
     }
 
-    public void startVpn() {
-        Log.i(TAG, "startVpn");
-        mConnectionHandler = new Thread(this::setupVpn);
-        mConnectionHandler.start();
+    public void setState(VpnState state) {
+        if (mService != null) {
+            mService.changeVpnState(state);
+        }
     }
 
-    private void setupVpn() {
+    public void startVpn() {
+        Log.i(TAG, "startVpn");
         setState(VpnState.CONNECTING);
         if (tun == null) {
             try {
@@ -117,48 +125,56 @@ public class CharonVpnService extends VpnService {
                 throw new RuntimeException(e);
             }
         }
-
-        if (mProfile != null) {
-            engine.Key key = new engine.Key();
-            key.setMark(mProfile.getMark());
-            key.setMTU(mProfile.getMTU());
-            key.setDevice("fd://" + tun.getFd());
-            key.setInterface("");
-            key.setLogLevel("debug");
-            key.setProxy(mProfile.getProxy());
-            key.setRestAPI("");
-            key.setTCPSendBufferSize("");
-            key.setTCPReceiveBufferSize("");
-            key.setTCPModerateReceiveBuffer(false);
-            engine.Engine.insert(key);
-            engine.Engine.start();
-            Log.i(TAG, "VPN is started");
-            setState(VpnState.CONNECTED);
-        }
+        startProxy();
     }
 
     public void stopVpn() {
         setState(VpnState.DISCONNECTING);
         try {
+            tun.detachFd();
+            engine.Engine.stop();
             if (tun != null) {
                 tun.close();
                 tun = null;
             }
-        } catch (IOException e) {
+            Log.i(TAG, "VPN is stopped");
+            setState(VpnState.DISCONNECTED);
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
             e.printStackTrace();
+            setState(VpnState.ERROR);
         }
-        try {
-            mConnectionHandler.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        Log.i(TAG, "VPN is stopped");
     }
 
-    public void setState(VpnState state) {
-        if (mService != null) {
-            mService.stateListener.stateChanged(state);
+    private void startProxy() {
+        try {
+            if (mProfile != null) {
+                engine.Key key = new engine.Key();
+                key.setMark(mProfile.getMark());
+                key.setMTU(mProfile.getMTU());
+                key.setDevice("fd://" + tun.getFd());
+                key.setInterface("");
+                key.setLogLevel("debug");
+                key.setProxy(mProfile.getProxy());
+                key.setRestAPI("");
+                key.setTCPSendBufferSize("");
+                key.setTCPReceiveBufferSize("");
+                key.setTCPModerateReceiveBuffer(false);
+                engine.Engine.touch();
+                engine.Engine.insert(key);
+                engine.Engine.start();
+                Log.i(TAG, "VPN is started");
+                setState(VpnState.CONNECTED);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+            e.printStackTrace();
+            setState(VpnState.ERROR);
         }
+    }
+
+    private void changeProxy() {
+        // TODO
     }
 
     /**
@@ -167,7 +183,7 @@ public class CharonVpnService extends VpnService {
      *
      * @see <a href="https://stackoverflow.com/a/41289228"></a>
      */
-    private void addRoutesExcept(Builder builder, String address, int prefixLength) {
+    public void addRoutesExcept(Builder builder, String address, int prefixLength) {
         try {
             byte[] bytes = InetAddress.getByName(address).getAddress();
             for (int i = 0; i < prefixLength; i++) { // each entry

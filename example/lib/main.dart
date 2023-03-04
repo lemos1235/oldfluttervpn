@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final _proxyController = TextEditingController(text: "socks5://192.168.1.7:7890");
+  final _proxyController = TextEditingController(text: "socks5://192.168.0.105:7890");
 
   var state = FlutterVpnState.disconnected;
 
@@ -58,6 +58,12 @@ class _MyAppState extends State<MyApp> {
             ElevatedButton(
               child: const Text('Disconnect'),
               onPressed: () => FlutterVpn.disconnect(),
+            ),
+            ElevatedButton(
+              child: const Text('ChangeProxy'),
+              onPressed: () => FlutterVpn.changeProxy(
+                proxy: _proxyController.text,
+              ),
             ),
           ],
         ),

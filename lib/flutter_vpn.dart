@@ -50,4 +50,11 @@ class FlutterVpn {
         mark: mark,
       );
 
+  /// Change VPN service's proxy.
+  static Future<void> changeProxy({
+    required String proxy,
+  }) =>
+      FlutterVpnPlatform.instance.changeProxy(
+        proxy: proxy,
+      );
 }
