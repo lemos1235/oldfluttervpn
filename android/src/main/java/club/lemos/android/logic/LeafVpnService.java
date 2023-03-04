@@ -11,7 +11,9 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
-
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -20,9 +22,9 @@ import java.util.UUID;
 import club.lemos.android.data.VpnProfile;
 import club.lemos.flutter_vpn.VpnState;
 
-public class CharonVpnService extends VpnService {
+public class LeafVpnService extends VpnService {
 
-    private static final String TAG = CharonVpnService.class.getSimpleName();
+    private static final String TAG = LeafVpnService.class.getSimpleName();
 
     public static final String DISCONNECT_ACTION = "club.lemos.android.logic.CharonVpnService.DISCONNECT";
 
@@ -41,19 +43,36 @@ public class CharonVpnService extends VpnService {
 
     private VpnStateService mService;
 
+    private final Object mServiceLock = new Object();
+
+    public final native void runLeaf(String configPath);
+
+    public final native void stopLeaf();
+
+    public final native void reloadLeaf();
+
+    public LeafVpnService() {
+        System.loadLibrary("leafandroid");
+    }
+
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {    /* since the service is local this is theoretically only called when the process is terminated */
             Log.i(TAG, "onServiceDisconnected");
-            mService = null;
+            stopVpn();
+            synchronized (mServiceLock) {
+                mService = null;
+            }
         }
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.i(TAG, "onServiceConnected");
-            mService = ((VpnStateService.LocalBinder) service).getService();
-            startVpn();
+            synchronized (mServiceLock) {
+                mService = ((VpnStateService.LocalBinder) service).getService();
+                startVpn();
+            }
         }
     };
 
@@ -77,6 +96,11 @@ public class CharonVpnService extends VpnService {
                 profile.setMTU(bundle.getInt("MTU", 0));
                 profile.setMark(bundle.getInt("MARK", 0));
                 mProfile = profile;
+                synchronized (mServiceLock) {
+                    if (mService != null) {
+                        startVpn();
+                    }
+                }
             }
         }
         return START_NOT_STICKY;
@@ -102,8 +126,10 @@ public class CharonVpnService extends VpnService {
     }
 
     public void setState(VpnState state) {
-        if (mService != null) {
-            mService.changeVpnState(state);
+        synchronized (mServiceLock) {
+            if (mService != null) {
+                mService.changeVpnState(state);
+            }
         }
     }
 
@@ -131,8 +157,8 @@ public class CharonVpnService extends VpnService {
     public void stopVpn() {
         setState(VpnState.DISCONNECTING);
         try {
-            tun.detachFd();
-            engine.Engine.stop();
+            stopLeaf();
+            mConnectionHandler.join();
             if (tun != null) {
                 tun.close();
                 tun = null;
@@ -149,20 +175,33 @@ public class CharonVpnService extends VpnService {
     private void startProxy() {
         try {
             if (mProfile != null) {
-                engine.Key key = new engine.Key();
-                key.setMark(mProfile.getMark());
-                key.setMTU(mProfile.getMTU());
-                key.setDevice("fd://" + tun.getFd());
-                key.setInterface("");
-                key.setLogLevel("debug");
-                key.setProxy(mProfile.getProxy());
-                key.setRestAPI("");
-                key.setTCPSendBufferSize("");
-                key.setTCPReceiveBufferSize("");
-                key.setTCPModerateReceiveBuffer(false);
-                engine.Engine.touch();
-                engine.Engine.insert(key);
-                engine.Engine.start();
+                mConnectionHandler = new Thread(() -> {
+                    File configFile = new File(this.getFilesDir(), "config.conf");
+                    String configContent = "" +
+                            "[General]\n" +
+                            "loglevel = info\n" +
+                            "dns-server = 223.5.5.5\n" +
+                            "tun-fd = TUN-FD\n" +
+                            "[Proxy]\n" +
+                            "Direct = direct\n" +
+                            "SOCKS5 = SOCKS_PROXY\n" +
+                            "[Rule]\n" +
+                            "FINAL, SOCKS5\n";
+                    ;
+                    configContent =
+                            configContent.replace("TUN-FD",
+                                    String.valueOf(tun.detachFd()));
+                    configContent = configContent.replace("SOCKS_PROXY",
+                            "socks, 192.168.1.7, 7890");
+                    Log.i(TAG, "config content" + configContent);
+                    try (FileOutputStream fos = new FileOutputStream(configFile)) {
+                        fos.write(configContent.getBytes());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    runLeaf(configFile.getAbsolutePath());
+                });
+                mConnectionHandler.start();
                 Log.i(TAG, "VPN is started");
                 setState(VpnState.CONNECTED);
             }

@@ -50,7 +50,7 @@ public class VpnStateService extends Service {
     public void connect(Bundle profileInfo) {
         if (!VpnState.CONNECTED.equals(vpnState)) {
             Context context = getApplicationContext();
-            Intent intent = new Intent(context, CharonVpnService.class);
+            Intent intent = new Intent(context, LeafVpnService.class);
             if (profileInfo == null) {
                 profileInfo = mProfileInfo;
             } else {
@@ -64,8 +64,8 @@ public class VpnStateService extends Service {
     public void disconnect() {
         if (VpnState.CONNECTED.equals(vpnState)) {
             Context context = getApplicationContext();
-            Intent intent = new Intent(context, CharonVpnService.class);
-            intent.setAction(CharonVpnService.DISCONNECT_ACTION);
+            Intent intent = new Intent(context, LeafVpnService.class);
+            intent.setAction(LeafVpnService.DISCONNECT_ACTION);
             context.startService(intent);
         }
     }
@@ -73,12 +73,12 @@ public class VpnStateService extends Service {
     public void changeProxy(String proxy) {
         if (VpnState.CONNECTED.equals(vpnState)) {
             Context context = getApplicationContext();
-            Intent intent = new Intent(context, CharonVpnService.class);
+            Intent intent = new Intent(context, LeafVpnService.class);
             Bundle profileInfo = new Bundle(mProfileInfo);
             profileInfo.putString("PROXY", proxy);
             mProfileInfo = profileInfo;
             intent.putExtras(mProfileInfo);
-            intent.setAction(CharonVpnService.CHG_PROXY_ACTION);
+            intent.setAction(LeafVpnService.CHG_PROXY_ACTION);
             context.startService(intent);
         }
     }
