@@ -126,9 +126,9 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 result.success(VpnStateHandler.vpnState?.ordinal)
             }
             "disconnect" -> vpnStateService?.disconnect()
-            "changeProxy" -> {
+            "switchProxy" -> {
                 val args = call.arguments as Map<*, *>
-                vpnStateService?.changeProxy( args["proxy"] as String)
+                vpnStateService?.switchProxy( args["proxy"] as String)
                 result.success(true)
             }
             else -> result.notImplemented()

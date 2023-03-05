@@ -70,7 +70,7 @@ public class VpnStateService extends Service {
         }
     }
 
-    public void changeProxy(String proxy) {
+    public void switchProxy(String proxy) {
         if (VpnState.CONNECTED.equals(vpnState)) {
             Context context = getApplicationContext();
             Intent intent = new Intent(context, LeafVpnService.class);
@@ -78,7 +78,7 @@ public class VpnStateService extends Service {
             profileInfo.putString("PROXY", proxy);
             mProfileInfo = profileInfo;
             intent.putExtras(mProfileInfo);
-            intent.setAction(LeafVpnService.CHG_PROXY_ACTION);
+            intent.setAction(LeafVpnService.SWITCH_PROXY_ACTION);
             context.startService(intent);
         }
     }

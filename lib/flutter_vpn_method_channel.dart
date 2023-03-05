@@ -83,10 +83,10 @@ class MethodChannelFlutterVpn extends FlutterVpnPlatform {
         if (mark != null) 'port': mark,
       });
 
-  /// Change VPN service's proxy.
+  /// Switch VPN service's proxy.
   @override
-  Future<void> changeProxy({required String proxy}) async {
-    await methodChannel.invokeMethod('changeProxy', {
+  Future<void> switchProxy({required String proxy}) async {
+    await methodChannel.invokeMethod('switchProxy', {
       'proxy': proxy,
     });
   }

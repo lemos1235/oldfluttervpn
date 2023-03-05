@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final _proxyController = TextEditingController(text: "socks5://192.168.0.105:7890");
+  final _proxyController = TextEditingController(text: "socks://192.168.1.7:7890");
 
   var state = FlutterVpnState.disconnected;
 
@@ -37,34 +37,53 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+      ),
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Flutter VPN'),
+          centerTitle: true,
         ),
         body: ListView(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
           children: <Widget>[
-            Text('Current State: $state'),
             TextFormField(
               controller: _proxyController,
-              decoration: const InputDecoration(icon: Icon(Icons.map_outlined)),
+              textAlignVertical: TextAlignVertical.center,
+              decoration: InputDecoration(
+                  isCollapsed: true,
+                  filled: true,
+                  fillColor: const Color(0xFFEBECF0),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFEBECF0)),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFEBECF0)),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  prefixIcon: Icon(
+                      state == FlutterVpnState.connected ? Icons.airplanemode_on :
+                      Icons.airplanemode_off)),
             ),
             ElevatedButton(
+              onPressed: () => FlutterVpn.connect(proxy: _proxyController.text),
               child: const Text('Connect'),
-              onPressed: () => FlutterVpn.connect(
-                proxy: _proxyController.text,
-              ),
             ),
             ElevatedButton(
-              child: const Text('Disconnect'),
               onPressed: () => FlutterVpn.disconnect(),
+              child: const Text('Disconnect'),
             ),
             ElevatedButton(
-              child: const Text('ChangeProxy'),
-              onPressed: () => FlutterVpn.changeProxy(
-                proxy: _proxyController.text,
-              ),
+              onPressed: state != FlutterVpnState.connected
+                  ? null
+                  : () => FlutterVpn.switchProxy(
+                        proxy: _proxyController.text,
+                      ),
+              child: const Text('SwitchProxy'),
             ),
+            Text('State: $state'),
           ],
         ),
       ),

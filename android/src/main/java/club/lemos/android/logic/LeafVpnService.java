@@ -12,9 +12,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
@@ -28,14 +26,27 @@ public class LeafVpnService extends VpnService {
 
     public static final String DISCONNECT_ACTION = "club.lemos.android.logic.CharonVpnService.DISCONNECT";
 
-    public static final String CHG_PROXY_ACTION = "club.lemos.android.logic.CharonVpnService.CHG_PROXY";
+    public static final String SWITCH_PROXY_ACTION = "club.lemos.android.logic.CharonVpnService.SWITCH_PROXY";
 
     private static final String ADDRESS = "10.0.0.2";
 
     private static final String ROUTE = "0.0.0.0";
     private static final String DNS = "1.1.1.1";
 
+    public static final String confTemplate = "" +
+            "[General]\n" +
+            "loglevel = info\n" +
+            "dns-server = 223.5.5.5\n" +
+            "tun-fd = TUN-FD\n" +
+            "[Proxy]\n" +
+            "Direct = direct\n" +
+            "SOCKS5 = SOCKS_PROXY\n" +
+            "[Rule]\n" +
+            "FINAL, SOCKS5\n";
+
     private ParcelFileDescriptor tun;
+
+    private Integer mfd;
 
     private VpnProfile mProfile;
 
@@ -83,16 +94,21 @@ public class LeafVpnService extends VpnService {
             if (DISCONNECT_ACTION.equals(intent.getAction())) {
                 mProfile = null;
                 stopVpn();
-            } else if (CHG_PROXY_ACTION.equals(intent.getAction())) {
+            } else if (SWITCH_PROXY_ACTION.equals(intent.getAction())) {
                 Bundle bundle = intent.getExtras();
                 String proxy = bundle.getString("PROXY");
+                proxy = proxy.replace("://", ",");
+                proxy = proxy.replace(":", ",");
                 mProfile.setProxy(proxy);
-                changeProxy();
+                switchProxy();
             } else {
                 Bundle bundle = intent.getExtras();
                 VpnProfile profile = new VpnProfile();
                 profile.setUUID(UUID.randomUUID());
-                profile.setProxy(bundle.getString("PROXY"));
+                String proxy = bundle.getString("PROXY");
+                proxy = proxy.replace("://", ",");
+                proxy = proxy.replace(":", ",");
+                profile.setProxy(proxy);
                 profile.setMTU(bundle.getInt("MTU", 0));
                 profile.setMark(bundle.getInt("MARK", 0));
                 mProfile = profile;
@@ -157,8 +173,7 @@ public class LeafVpnService extends VpnService {
     public void stopVpn() {
         setState(VpnState.DISCONNECTING);
         try {
-            stopLeaf();
-            mConnectionHandler.join();
+            stopProxy();
             if (tun != null) {
                 tun.close();
                 tun = null;
@@ -177,22 +192,12 @@ public class LeafVpnService extends VpnService {
             if (mProfile != null) {
                 mConnectionHandler = new Thread(() -> {
                     File configFile = new File(this.getFilesDir(), "config.conf");
-                    String configContent = "" +
-                            "[General]\n" +
-                            "loglevel = info\n" +
-                            "dns-server = 223.5.5.5\n" +
-                            "tun-fd = TUN-FD\n" +
-                            "[Proxy]\n" +
-                            "Direct = direct\n" +
-                            "SOCKS5 = SOCKS_PROXY\n" +
-                            "[Rule]\n" +
-                            "FINAL, SOCKS5\n";
-                    ;
-                    configContent =
-                            configContent.replace("TUN-FD",
-                                    String.valueOf(tun.detachFd()));
-                    configContent = configContent.replace("SOCKS_PROXY",
-                            "socks, 192.168.1.7, 7890");
+                    mfd = tun.detachFd();
+                    String configContent =
+                            confTemplate.replace("TUN-FD",
+                                            String.valueOf(mfd))
+                                    .replace("SOCKS_PROXY",
+                                            mProfile.getProxy());
                     Log.i(TAG, "config content" + configContent);
                     try (FileOutputStream fos = new FileOutputStream(configFile)) {
                         fos.write(configContent.getBytes());
@@ -212,8 +217,24 @@ public class LeafVpnService extends VpnService {
         }
     }
 
-    private void changeProxy() {
-        // TODO
+    private void switchProxy() {
+        File configFile = new File(this.getFilesDir(), "config.conf");
+        String configContent =
+                confTemplate.replace("TUN-FD",
+                                String.valueOf(mfd))
+                        .replace("SOCKS_PROXY", mProfile.getProxy());
+        Log.i(TAG, "config content" + configContent);
+        try (FileOutputStream fos = new FileOutputStream(configFile)) {
+            fos.write(configContent.getBytes());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        reloadLeaf();
+    }
+
+    private void stopProxy() throws InterruptedException {
+        stopLeaf();
+        mConnectionHandler.join();
     }
 
     /**
