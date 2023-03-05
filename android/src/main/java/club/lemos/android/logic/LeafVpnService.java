@@ -14,6 +14,8 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
@@ -97,18 +99,14 @@ public class LeafVpnService extends VpnService {
             } else if (SWITCH_PROXY_ACTION.equals(intent.getAction())) {
                 Bundle bundle = intent.getExtras();
                 String proxy = bundle.getString("PROXY");
-                proxy = proxy.replace("://", ",");
-                proxy = proxy.replace(":", ",");
-                mProfile.setProxy(proxy);
+                mProfile.setProxy(decodeProxyUrl(proxy));
                 switchProxy();
             } else {
                 Bundle bundle = intent.getExtras();
                 VpnProfile profile = new VpnProfile();
                 profile.setUUID(UUID.randomUUID());
                 String proxy = bundle.getString("PROXY");
-                proxy = proxy.replace("://", ",");
-                proxy = proxy.replace(":", ",");
-                profile.setProxy(proxy);
+                profile.setProxy(decodeProxyUrl(proxy));
                 profile.setMTU(bundle.getInt("MTU", 0));
                 profile.setMark(bundle.getInt("MARK", 0));
                 mProfile = profile;
@@ -120,6 +118,38 @@ public class LeafVpnService extends VpnService {
             }
         }
         return START_NOT_STICKY;
+    }
+
+    private String decodeProxyUrl(String uriString) {
+        try {
+            URI uri = new URI(uriString);
+            String schema = uri.getScheme();
+            String host = uri.getHost();
+            int port = uri.getPort();
+            StringBuilder sb = new StringBuilder();
+            sb.append(schema);
+            sb.append(",");
+            sb.append(host);
+            sb.append(",");
+            sb.append(port);
+            sb.append(",");
+            String userInfo = uri.getUserInfo();
+            if (userInfo != null && !userInfo.isEmpty()) {
+                String[] credentials = userInfo.split(":");
+                String username = credentials[0];
+                sb.append("username=");
+                sb.append(username);
+                if (credentials.length > 1) {
+                    String password = credentials[1];
+                    sb.append(",");
+                    sb.append("password=");
+                    sb.append(password);
+                }
+            }
+            return sb.toString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
