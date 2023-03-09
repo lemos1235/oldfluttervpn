@@ -75,12 +75,10 @@ class MethodChannelFlutterVpn extends FlutterVpnPlatform {
   Future<void> connect({
     required String proxy,
     int? mtu,
-    int? mark,
   }) async =>
       await methodChannel.invokeMethod('connect', {
         'proxy': proxy,
         if (mtu != null) 'mtu': mtu,
-        if (mark != null) 'port': mark,
       });
 
   /// Switch VPN service's proxy.

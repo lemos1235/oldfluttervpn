@@ -30,7 +30,7 @@ public class LeafVpnService extends VpnService {
 
     public static final String SWITCH_PROXY_ACTION = "club.lemos.android.logic.CharonVpnService.SWITCH_PROXY";
 
-    private static final String ADDRESS = "10.0.0.2";
+    private static final String ADDRESS = "10.255.0.1";
 
     private static final String ROUTE = "0.0.0.0";
     private static final String DNS = "1.1.1.1";
@@ -107,8 +107,7 @@ public class LeafVpnService extends VpnService {
                 profile.setUUID(UUID.randomUUID());
                 String proxy = bundle.getString("PROXY");
                 profile.setProxy(decodeProxyUrl(proxy));
-                profile.setMTU(bundle.getInt("MTU", 0));
-                profile.setMark(bundle.getInt("MARK", 0));
+                profile.setMTU(bundle.getInt("MTU", 1500));
                 mProfile = profile;
                 synchronized (mServiceLock) {
                     if (mService != null) {
@@ -185,13 +184,11 @@ public class LeafVpnService extends VpnService {
         if (tun == null) {
             try {
                 Builder builder = new Builder()
-                        .addAddress(ADDRESS, 24)
-//                        .addRoute(ROUTE, 0)
+                        .setMtu(mProfile.getMTU())
+                        .addAddress(ADDRESS, 30)
+                        .addRoute(ROUTE, 0)
                         .addDnsServer(DNS)
                         .addDisallowedApplication(this.getApplication().getPackageName());
-
-                // let DNS queries bypass VPN if SOCKS server does not support UDP bind
-                addRoutesExcept(builder, DNS, 32);
                 tun = builder.establish();
             } catch (PackageManager.NameNotFoundException e) {
                 throw new RuntimeException(e);
@@ -237,6 +234,9 @@ public class LeafVpnService extends VpnService {
                     runLeaf(configFile.getAbsolutePath());
                 });
                 mConnectionHandler.start();
+                mConnectionHandler.setUncaughtExceptionHandler((t,e) -> {
+                    System.out.println(t.getName() + "has error :" + e.getMessage());
+                });
                 Log.i(TAG, "VPN is started");
                 setState(VpnState.CONNECTED);
             }
@@ -265,29 +265,6 @@ public class LeafVpnService extends VpnService {
     private void stopProxy() throws InterruptedException {
         stopLeaf();
         mConnectionHandler.join();
-    }
-
-    /**
-     * Computes the inverted subnet, routing all traffic except to the specified subnet. Use prefixLength
-     * of 32 or 128 for a single address.
-     *
-     * @see <a href="https://stackoverflow.com/a/41289228"></a>
-     */
-    public void addRoutesExcept(Builder builder, String address, int prefixLength) {
-        try {
-            byte[] bytes = InetAddress.getByName(address).getAddress();
-            for (int i = 0; i < prefixLength; i++) { // each entry
-                byte[] res = new byte[bytes.length];
-                for (int j = 0; j <= i; j++) { // each prefix bit
-                    res[j / 8] = (byte) (res[j / 8] | (bytes[j / 8] & (1 << (7 - (j % 8)))));
-                }
-                res[i / 8] ^= (1 << (7 - (i % 8)));
-
-                builder.addRoute(InetAddress.getByAddress(res), i + 1);
-            }
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }

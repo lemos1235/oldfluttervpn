@@ -47,7 +47,6 @@ class FlutterVpn {
       FlutterVpnPlatform.instance.connect(
         proxy: proxy,
         mtu: mtu,
-        mark: mark,
       );
 
   /// Switch VPN service's proxy.

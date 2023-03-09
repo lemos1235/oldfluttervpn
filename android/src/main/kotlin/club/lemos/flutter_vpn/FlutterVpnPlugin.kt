@@ -115,9 +115,6 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 if (args.containsKey("mtu")) {
                     profileInfo.putInt("MTU", args["mtu"] as Int)
                 }
-                if (args.containsKey("mark")) {
-                    profileInfo.putInt("MARK", args["mark"] as Int)
-                }
 
                 vpnStateService?.connect(profileInfo)
                 result.success(true)

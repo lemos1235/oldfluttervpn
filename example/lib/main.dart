@@ -64,17 +64,17 @@ class _MyAppState extends State<MyApp> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   prefixIcon: Icon(
-                      state == FlutterVpnState.connected ? Icons.airplanemode_on :
-                      Icons.airplanemode_off)),
+                      state == FlutterVpnState.connected ? Icons.airplanemode_on : Icons.airplanemode_off)),
             ),
-            ElevatedButton(
-              onPressed: () => FlutterVpn.connect(proxy: _proxyController.text),
-              child: const Text('Connect'),
-            ),
-            ElevatedButton(
-              onPressed: () => FlutterVpn.disconnect(),
-              child: const Text('Disconnect'),
-            ),
+            state == FlutterVpnState.disconnected
+                ? ElevatedButton(
+                    onPressed: () => FlutterVpn.connect(proxy: _proxyController.text),
+                    child: const Text('Connect'),
+                  )
+                : ElevatedButton(
+                    onPressed: () => FlutterVpn.disconnect(),
+                    child: const Text('Disconnect'),
+                  ),
             ElevatedButton(
               onPressed: state != FlutterVpnState.connected
                   ? null
