@@ -23,9 +23,11 @@ object VpnStateHandler : EventChannel.StreamHandler, StateListener {
 
     var vpnState: VpnState? = null
 
+    private val handler = Handler(Looper.getMainLooper())
+
     override fun stateChanged(state: VpnState) {
         vpnState = state
-        Handler(Looper.getMainLooper()).post {
+        handler.post {
             eventSink?.success(state.ordinal)
         }
     }

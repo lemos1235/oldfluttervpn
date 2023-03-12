@@ -57,7 +57,7 @@ public class VpnStateService extends Service {
                 mProfileInfo = profileInfo;
             }
             intent.putExtras(profileInfo);
-            ContextCompat.startForegroundService(context, intent);
+            context.startService(intent);
         }
     }
 
