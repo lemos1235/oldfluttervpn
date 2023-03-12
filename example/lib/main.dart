@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final _proxyController = TextEditingController(text: "socks://lisi:abc123@192.168.1.7:7890");
+  final _proxyController = TextEditingController(text: "socks://lisi:abc123@192.168.1.5:7890");
 
   var state = FlutterVpnState.disconnected;
 

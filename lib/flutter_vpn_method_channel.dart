@@ -67,7 +67,7 @@ class MethodChannelFlutterVpn extends FlutterVpnPlatform {
     await methodChannel.invokeMethod('disconnect');
   }
 
-  /// Connect to VPN. (IKEv2-EAP)
+  /// Connect to VPN.
   ///
   /// This will create a background VPN service.
   /// MTU is only available on android.
