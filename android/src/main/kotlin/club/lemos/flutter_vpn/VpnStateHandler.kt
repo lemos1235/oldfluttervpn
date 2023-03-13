@@ -21,7 +21,7 @@ object VpnStateHandler : EventChannel.StreamHandler, StateListener {
 
     private var eventSink: EventChannel.EventSink? = null
 
-    var vpnState: VpnState? = null
+    var vpnState: VpnState = VpnState.DISCONNECTED
 
     private val handler = Handler(Looper.getMainLooper())
 

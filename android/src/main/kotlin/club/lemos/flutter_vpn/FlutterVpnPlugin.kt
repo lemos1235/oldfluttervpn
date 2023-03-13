@@ -120,7 +120,7 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 result.success(true)
             }
             "getCurrentState" -> {
-                result.success(VpnStateHandler.vpnState?.ordinal)
+                result.success(VpnStateHandler.vpnState.ordinal)
             }
             "disconnect" -> vpnStateService?.disconnect()
             "switchProxy" -> {
