@@ -7,7 +7,11 @@ public class VpnProfile {
     private UUID mUUID;
     private String proxy;
 
-    private Integer mMTU, mMark;
+    private Integer mMTU;
+
+    private String[] allowedApps;
+
+    private String[] disallowedApps;
 
     public void setUUID(UUID uuid) {
         this.mUUID = uuid;
@@ -33,11 +37,19 @@ public class VpnProfile {
         this.mMTU = mtu;
     }
 
-    public Integer getMark() {
-        return mMark;
+    public String[] getAllowedApps() {
+        return allowedApps;
     }
 
-    public void setMark(Integer mMark) {
-        this.mMark = mMark;
+    public void setAllowedApps(String[] allowedApps) {
+        this.allowedApps = allowedApps;
+    }
+
+    public String[] getDisallowedApps() {
+        return disallowedApps;
+    }
+
+    public void setDisallowedApps(String[] disallowedApps) {
+        this.disallowedApps = disallowedApps;
     }
 }

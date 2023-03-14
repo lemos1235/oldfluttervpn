@@ -82,5 +82,4 @@ public class VpnStateService extends Service {
             context.startService(intent);
         }
     }
-
 }

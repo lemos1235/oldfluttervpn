@@ -42,11 +42,14 @@ class FlutterVpn {
   static Future<void> connect({
     required String proxy,
     int? mtu,
-    int? mark,
+    String? allowedApps,
+    String? disallowedApps,
   }) =>
       FlutterVpnPlatform.instance.connect(
         proxy: proxy,
         mtu: mtu,
+        allowedApps: allowedApps,
+        disallowedApps: disallowedApps,
       );
 
   /// Switch VPN service's proxy.

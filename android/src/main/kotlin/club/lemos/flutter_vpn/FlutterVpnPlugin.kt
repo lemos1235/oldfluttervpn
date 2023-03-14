@@ -115,6 +115,12 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 if (args.containsKey("mtu")) {
                     profileInfo.putInt("MTU", args["mtu"] as Int)
                 }
+                if (args.containsKey("allowedApps")) {
+                    profileInfo.putString("allowedApps", args["allowedApps"] as String)
+                }
+                if (args.containsKey("disallowedApps")) {
+                    profileInfo.putString("disallowedApps", args["disallowedApps"] as String)
+                }
 
                 vpnStateService?.connect(profileInfo)
                 result.success(true)
@@ -125,7 +131,7 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "disconnect" -> vpnStateService?.disconnect()
             "switchProxy" -> {
                 val args = call.arguments as Map<*, *>
-                vpnStateService?.switchProxy( args["proxy"] as String)
+                vpnStateService?.switchProxy(args["proxy"] as String)
                 result.success(true)
             }
             else -> result.notImplemented()

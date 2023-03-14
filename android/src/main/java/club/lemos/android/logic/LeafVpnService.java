@@ -13,10 +13,8 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.UUID;
 
 import club.lemos.android.data.VpnProfile;
@@ -108,6 +106,12 @@ public class LeafVpnService extends VpnService {
                 String proxy = bundle.getString("PROXY");
                 profile.setProxy(decodeProxyUrl(proxy));
                 profile.setMTU(bundle.getInt("MTU", 1500));
+                if (bundle.containsKey("allowedApps")) {
+                    profile.setAllowedApps(bundle.getString("allowedApps").split(","));
+                }
+                if (bundle.containsKey("disallowedApps")) {
+                    profile.setDisallowedApps(bundle.getString("disallowedApps").split(","));
+                }
                 mProfile = profile;
                 synchronized (mServiceLock) {
                     if (mService != null) {
@@ -189,6 +193,16 @@ public class LeafVpnService extends VpnService {
                         .addRoute(ROUTE, 0)
                         .addDnsServer(DNS)
                         .addDisallowedApplication(this.getApplication().getPackageName());
+                if (mProfile.getAllowedApps() != null) {
+                    for (String appPackage : mProfile.getAllowedApps()) {
+                        builder.addAllowedApplication(appPackage);
+                    }
+                }
+                if (mProfile.getDisallowedApps() != null) {
+                    for (String appPackage : mProfile.getDisallowedApps()) {
+                        builder.addDisallowedApplication(appPackage);
+                    }
+                }
                 tun = builder.establish();
             } catch (PackageManager.NameNotFoundException e) {
                 throw new RuntimeException(e);
@@ -234,7 +248,7 @@ public class LeafVpnService extends VpnService {
                     runLeaf(configFile.getAbsolutePath());
                 });
                 mConnectionHandler.start();
-                mConnectionHandler.setUncaughtExceptionHandler((t,e) -> {
+                mConnectionHandler.setUncaughtExceptionHandler((t, e) -> {
                     System.out.println(t.getName() + "has error :" + e.getMessage());
                 });
                 Log.i(TAG, "VPN is started");
