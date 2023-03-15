@@ -191,16 +191,19 @@ public class LeafVpnService extends VpnService {
                         .setMtu(mProfile.getMTU())
                         .addAddress(ADDRESS, 30)
                         .addRoute(ROUTE, 0)
-                        .addDnsServer(DNS)
-                        .addDisallowedApplication(this.getApplication().getPackageName());
+                        .addDnsServer(DNS);
                 if (mProfile.getAllowedApps() != null) {
                     for (String appPackage : mProfile.getAllowedApps()) {
-                        builder.addAllowedApplication(appPackage);
+                        if (!appPackage.equals(this.getApplication().getPackageName())) {
+                            builder.addAllowedApplication(appPackage);
+                        }
                     }
-                }
-                if (mProfile.getDisallowedApps() != null) {
-                    for (String appPackage : mProfile.getDisallowedApps()) {
-                        builder.addDisallowedApplication(appPackage);
+                } else {
+                    builder.addDisallowedApplication(this.getApplication().getPackageName());
+                    if (mProfile.getDisallowedApps() != null) {
+                        for (String appPackage : mProfile.getDisallowedApps()) {
+                            builder.addDisallowedApplication(appPackage);
+                        }
                     }
                 }
                 tun = builder.establish();
