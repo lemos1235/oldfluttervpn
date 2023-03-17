@@ -4,8 +4,8 @@
 # This file should be version controlled.
 
 version:
-  revision: 8661d8aecd626f7f57ccbcb735553edc05a2e713
-  channel: beta
+  revision: c07f7888888435fd9df505aa2efc38d3cf65681b
+  channel: stable
 
 project_type: plugin
 
@@ -13,14 +13,14 @@ project_type: plugin
 migration:
   platforms:
     - platform: root
-      create_revision: 13a2fb10b838971ce211230f8ffdd094c14af02c
-      base_revision: 13a2fb10b838971ce211230f8ffdd094c14af02c
+      create_revision: c07f7888888435fd9df505aa2efc38d3cf65681b
+      base_revision: c07f7888888435fd9df505aa2efc38d3cf65681b
     - platform: android
-      create_revision: 13a2fb10b838971ce211230f8ffdd094c14af02c
-      base_revision: 13a2fb10b838971ce211230f8ffdd094c14af02c
-    - platform: ios
-      create_revision: 13a2fb10b838971ce211230f8ffdd094c14af02c
-      base_revision: 13a2fb10b838971ce211230f8ffdd094c14af02c
+      create_revision: c07f7888888435fd9df505aa2efc38d3cf65681b
+      base_revision: c07f7888888435fd9df505aa2efc38d3cf65681b
+    - platform: macos
+      create_revision: c07f7888888435fd9df505aa2efc38d3cf65681b
+      base_revision: c07f7888888435fd9df505aa2efc38d3cf65681b
 
   # User provided section
 
