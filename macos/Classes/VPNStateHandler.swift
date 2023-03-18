@@ -7,31 +7,42 @@
 
 import FlutterMacOS
 
+enum VpnState: Int {
+    case disconnected = 0;
+    case connecting = 1;
+    case connected = 2;
+    case disconnecting = 3;
+    case error = 4;
+}
+
+
 class VPNStateHandler: FlutterStreamHandler {
-    static var _sink: FlutterEventSink?
+  static var _sink: FlutterEventSink?
+  
+  static var vpnState: VpnState = VpnState.disconnected
 
-    static func updateState(_ newState: Int, errorMessage: String? = nil) {
-        guard let sink = _sink else {
-            return
-        }
-
-        if let errorMsg = errorMessage {
-            sink(FlutterError(code: "\(newState)",
-                              message: errorMsg,
-                              details: nil))
-            return
-        }
-
-        sink(newState)
+  static func updateState(_ newState: VpnState, errorMessage: String? = nil) {
+    guard let sink = _sink else {
+      return
     }
 
-    func onListen(withArguments _: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-        VPNStateHandler._sink = events
-        return nil
+    if let errorMsg = errorMessage {
+      sink(FlutterError(code: "\(newState)",
+                        message: errorMsg,
+                        details: nil))
+      return
     }
+    vpnState = newState
+    sink(newState.rawValue)
+  }
 
-    func onCancel(withArguments _: Any?) -> FlutterError? {
-        VPNStateHandler._sink = nil
-        return nil
-    }
+  func onListen(withArguments _: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    VPNStateHandler._sink = events
+    return nil
+  }
+
+  func onCancel(withArguments _: Any?) -> FlutterError? {
+    VPNStateHandler._sink = nil
+    return nil
+  }
 }
