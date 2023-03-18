@@ -14,8 +14,12 @@ A new Flutter plugin project.
   s.author           = { 'Your Company' => 'email@example.com' }
 
   s.source           = { :path => '.' }
+  s.public_header_files = 'Classes/**/*.h'
   s.source_files     = 'Classes/**/*'
   s.dependency 'FlutterMacOS'
+  s.static_framework = true
+  s.vendored_libraries = "libleaf.a"
+
 
   s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
